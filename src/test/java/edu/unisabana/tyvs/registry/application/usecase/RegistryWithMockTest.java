@@ -56,7 +56,7 @@ public class RegistryWithMockTest {
     // --- PRUEBA 3: excepción controlada ---
     @Test
     public void shouldHandleRepositoryException() throws Exception {
-        // Arrange: simulamos un error de BD
+        // Arrange: simulamos un error de BDatos
         when(repo.existsById(5)).thenReturn(false);
         doThrow(new RuntimeException("BD caída")).when(repo)
                 .save(anyInt(), anyString(), anyInt(), anyBoolean());
