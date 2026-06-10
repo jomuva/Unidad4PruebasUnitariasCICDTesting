@@ -6,7 +6,7 @@ import edu.unisabana.tyvs.registry.domain.model.RegisterResult;
 
 public class Registry {
     private static final int EDAD_MINIMA = 18;
-    private static final int EDAD_MAXIMA = 120;
+    private static final int EDAD_MAXIMA = 121;
 
     private final RegistryRepositoryPort repo;
 

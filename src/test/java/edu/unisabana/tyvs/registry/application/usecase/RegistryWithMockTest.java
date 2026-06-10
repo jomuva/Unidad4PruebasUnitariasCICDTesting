@@ -61,6 +61,7 @@ public class RegistryWithMockTest {
         doThrow(new RuntimeException("BD caída")).when(repo)
                 .save(anyInt(), anyString(), anyInt(), anyBoolean());
         Person p = new Person("Error", 5, 30, Gender.FEMALE, true);
+        //prueeba
 
         // Act + Assert: el sistema no explota, devuelve el error controlado
         try {
