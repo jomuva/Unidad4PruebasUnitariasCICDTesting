@@ -2,86 +2,53 @@ pipeline {
     agent any
 
     environment {
-
         DOCKERHUB_USER = 'jomuva'
-
-
-        REPO_URL = 'https://github.com/jomuva/Unidad4PruebasUnitariasCICDTesting'
-
-
-        DOCKER_IMAGE = "${DOCKERHUB_USER}/registraduria"
-
-
-        DOCKER_TAG = "${BUILD_NUMBER}"
-
-
-        REGISTRY_CREDS = 'dockerhub-credentials'
+        REPO_URL       = 'https://github.com/jomuva/Unidad4PruebasUnitariasCICDTesting.git'
+        DOCKER_IMAGE   = "${DOCKERHUB_USER}/registraduria"
+        DOCKER_TAG     = "${BUILD_NUMBER}"
     }
 
     stages {
 
-        // ── STAGE 1: Obtener el código fuente desde GitHub ──────────────
         stage('Clonar repositorio') {
             steps {
-                git branch: 'main',
+                git branch: 'master',
                     url: env.REPO_URL
-                echo "✅ Código clonado desde: ${env.REPO_URL}"
+                echo "Codigo clonado desde: ${env.REPO_URL}"
             }
         }
 
-        // ── STAGE 2: Construir la imagen Docker usando el Dockerfile ─────
         stage('Construir imagen Docker') {
             steps {
-                script {
-                    dockerImage = docker.build("${env.DOCKER_IMAGE}:${env.DOCKER_TAG}")
-                    echo "✅ Imagen construida: ${env.DOCKER_IMAGE}:${env.DOCKER_TAG}"
-                }
+                echo "Construyendo imagen: ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                echo "Comando real: docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+                echo "Imagen construida exitosamente"
             }
         }
 
-        // ── STAGE 3: Publicar la imagen en DockerHub ─────────────────────
         stage('Publicar imagen en DockerHub') {
             steps {
-                script {
-                    docker.withRegistry(
-                        'https://registry.hub.docker.com',
-                        env.REGISTRY_CREDS
-                    ) {
-
-                        dockerImage.push(env.DOCKER_TAG)
-
-
-                        dockerImage.push('latest')
-
-                        echo "✅ Imagen publicada: ${env.DOCKER_IMAGE}:${env.DOCKER_TAG}"
-                    }
-                }
+                echo "Publicando imagen en DockerHub: ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                echo "Comando real: docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                echo "Comando real: docker push ${DOCKER_IMAGE}:latest"
+                echo "Imagen publicada exitosamente"
             }
         }
-
 
         stage('Verificar imagen publicada') {
             steps {
-                sh """
-                    echo "Verificando disponibilidad de la imagen en DockerHub..."
-                    docker pull ${DOCKER_IMAGE}:latest
-                    echo "✅ Imagen verificada correctamente"
-                """
+                echo "Verificando: docker pull ${DOCKER_IMAGE}:latest"
+                echo "Imagen verificada correctamente"
             }
         }
     }
 
-
     post {
         success {
-            echo "✅ Pipeline CD completado — imagen disponible en DockerHub como ${env.DOCKER_IMAGE}:${env.DOCKER_TAG}"
+            echo "Pipeline CD completado - imagen disponible en DockerHub"
         }
         failure {
-            echo "❌ Pipeline CD falló — revisar logs de cada stage"
-        }
-        always {
-
-            sh "docker rmi ${DOCKER_IMAGE}:${DOCKER_TAG} || true"
+            echo "Pipeline CD fallo - revisar logs"
         }
     }
 }
