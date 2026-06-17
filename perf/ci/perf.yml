@@ -1,0 +1,57 @@
+name: Pruebas de Rendimiento (k6)
+
+on:
+  workflow_dispatch:        # ejecución manual desde GitHub
+  push:
+    paths:
+      - 'perf/scripts/**'   # solo cuando cambien los scripts
+
+jobs:
+  baseline:
+    name: Baseline (50 VUs)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Java 17 e iniciar Spring Boot
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Iniciar la aplicación en background
+        run: |
+          cd registraduria
+          mvn -DskipTests spring-boot:run &
+          echo "Esperando que Spring Boot arranque..."
+          sleep 30
+          curl -f http://localhost:8080/register \
+            -X POST -H "Content-Type: application/json" \
+            -d '{"name":"Test","id":99999,"age":30,"gender":"FEMALE","alive":true}' \
+            || (echo "App no responde" && exit 1)
+
+      - name: Instalar k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring \
+            --keyring /usr/share/keyrings/k6-archive-keyring.gpg \
+            --keyserver hkp://keyserver.ubuntu.com:80 \
+            --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] \
+            https://dl.k6.io/deb stable main" \
+            | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update && sudo apt-get install k6 -y
+
+      - name: Ejecutar Baseline
+        run: |
+          k6 run -e SCENARIO=baseline \
+            perf/scripts/register_voter_k6.js \
+            --out json=perf/results/baseline.json
+        continue-on-error: true
+
+      - name: Publicar resultados como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-baseline-results
+          path: perf/results/baseline.json
